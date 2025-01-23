@@ -83,6 +83,6 @@ fn track_mouse(
         let angle = direction.y.atan2(direction.x);
 
         // Set the rotation of the player
-        player_transform.rotation = Quat::from_rotation_z(angle - std::f32::consts::FRAC_PI_2);
+        player_transform.rotation = Quat::from_rotation_z(angle);
     }
 }
