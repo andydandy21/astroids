@@ -1,12 +1,12 @@
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::{color::palettes::css::BLUE, prelude::*, window::PrimaryWindow};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_player);
-        app.add_systems(FixedUpdate, move_player);
-        app.add_systems(Update, track_mouse);
+        app.add_systems(FixedUpdate, (move_player, update_projectiles));
+        app.add_systems(Update, (track_mouse, shoot_projectile));
     }
 }
 
@@ -16,9 +16,12 @@ struct Player {
     move_down: KeyCode,
     move_left: KeyCode,
     move_right: KeyCode,
+    projectile_timer: Timer,
 }
 
 fn spawn_player(mut commands: Commands) {
+    let fire_rate = 5.0; // shots per second
+
     commands.spawn((
         Sprite::from_color(Color::WHITE, Vec2::new(25., 25.)),
         Player {
@@ -26,7 +29,9 @@ fn spawn_player(mut commands: Commands) {
             move_down: KeyCode::KeyS,
             move_left: KeyCode::KeyA,
             move_right: KeyCode::KeyD,
+            projectile_timer: Timer::from_seconds(1.0 / fire_rate, TimerMode::Repeating),
         },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 100.0)),
     ));
 }
 
@@ -73,5 +78,53 @@ fn track_mouse(
         let direction = cursor_world_pos - player_pos;
         let angle = direction.y.atan2(direction.x);
         player_transform.rotation = Quat::from_rotation_z(angle);
+    }
+}
+
+#[derive(Component)]
+struct Projectile {
+    speed: f32,
+}
+
+fn shoot_projectile(
+    mut commands: Commands,
+    input: Res<ButtonInput<MouseButton>>,
+    mut player_q: Query<(&Transform, &mut Player)>,
+    time: Res<Time>,
+) {
+    let (player_pos, mut player) = player_q.single_mut();
+    player.projectile_timer.tick(time.delta());
+
+    if input.pressed(MouseButton::Left) && player.projectile_timer.just_finished() {
+        commands.spawn((
+            Sprite::from_color(BLUE, Vec2::new(20.0, 5.0)),
+            Transform {
+                translation: Vec3::new(player_pos.translation.x, player_pos.translation.y, 0.0),
+                rotation: player_pos.rotation,
+                ..Default::default()
+            },
+            Projectile { speed: 25.0 },
+        ));
+    }
+}
+
+fn update_projectiles(
+    mut commands: Commands,
+    mut projectile_q: Query<(Entity, &mut Transform, &Projectile)>,
+    window: Query<&Window>,
+) {
+    let window = window.single();
+    let bound_x = window.width() / 2.0;
+    let bound_y = window.height() / 2.0;
+
+    for (entity, mut transform, projectile) in &mut projectile_q {
+        // Move projectile in the direction it's facing
+        let direction = transform.rotation * Vec3::X;
+        transform.translation += direction * projectile.speed;
+
+        // Despawn projectile_q that go off screen
+        if transform.translation.x.abs() > bound_x || transform.translation.y.abs() > bound_y {
+            commands.entity(entity).despawn();
+        }
     }
 }
