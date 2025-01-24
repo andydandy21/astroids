@@ -1,11 +1,14 @@
 use bevy::{color::palettes::css::BLUE, prelude::*, window::PrimaryWindow};
 
+use crate::projectile::*;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(ProjectilePlugin);
         app.add_systems(Startup, spawn_player);
-        app.add_systems(FixedUpdate, (move_player, update_projectiles));
+        app.add_systems(FixedUpdate, move_player);
         app.add_systems(Update, (track_mouse, shoot_projectile));
     }
 }
@@ -81,11 +84,6 @@ fn track_mouse(
     }
 }
 
-#[derive(Component)]
-struct Projectile {
-    speed: f32,
-}
-
 fn shoot_projectile(
     mut commands: Commands,
     input: Res<ButtonInput<MouseButton>>,
@@ -105,26 +103,5 @@ fn shoot_projectile(
             },
             Projectile { speed: 25.0 },
         ));
-    }
-}
-
-fn update_projectiles(
-    mut commands: Commands,
-    mut projectile_q: Query<(Entity, &mut Transform, &Projectile)>,
-    window: Query<&Window>,
-) {
-    let window = window.single();
-    let bound_x = window.width() / 2.0;
-    let bound_y = window.height() / 2.0;
-
-    for (entity, mut transform, projectile) in &mut projectile_q {
-        // Move projectile in the direction it's facing
-        let direction = transform.rotation * Vec3::X;
-        transform.translation += direction * projectile.speed;
-
-        // Despawn projectile_q that go off screen
-        if transform.translation.x.abs() > bound_x || transform.translation.y.abs() > bound_y {
-            commands.entity(entity).despawn();
-        }
     }
 }

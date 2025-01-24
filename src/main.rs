@@ -3,6 +3,8 @@ use bevy::prelude::*;
 mod player;
 use player::PlayerPlugin;
 
+mod projectile;
+
 fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
