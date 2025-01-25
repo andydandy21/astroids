@@ -38,7 +38,6 @@ fn spawn_player(mut commands: Commands) {
     ));
 }
 
-// TODO: Check the FixedUpdate schedule and see if it works better than using Time
 fn move_player(
     mut player: Query<(&Player, &mut Transform)>,
     window: Query<&Window>,
