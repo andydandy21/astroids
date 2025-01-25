@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+mod asteroid;
+use asteroid::AsteroidPlugin;
+
 mod player;
 use player::PlayerPlugin;
 
@@ -16,6 +19,7 @@ fn main() {
     }));
     app.add_systems(Startup, spawn_camera);
     app.add_plugins(PlayerPlugin);
+    app.add_plugins(AsteroidPlugin);
     app.run();
 }
 
