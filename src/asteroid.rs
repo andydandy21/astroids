@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::css::RED, prelude::*};
 
 pub struct AsteroidPlugin;
 
@@ -14,7 +14,7 @@ fn spawn_asteroid(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.spawn((
-        Mesh2d(meshes.add(Circle::new(50.0))),
+        Mesh2d(meshes.add(Circle::new(25.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from_color(RED))),
     ));
 }
