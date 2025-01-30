@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bevy::{color::palettes::css::RED, prelude::*, window::PrimaryWindow};
-use rand::Rng;
+use rand::{seq::IndexedRandom, Rng};
 
 pub struct AsteroidPlugin;
 
@@ -27,10 +27,7 @@ fn spawn_asteroid(
     time: Res<Time>,
     mut spawn_timer: ResMut<AsteroidSpawnTimer>,
 ) {
-    // Tick the timer
     spawn_timer.timer.tick(time.delta());
-
-    // Only spawn if the timer finished
     if !spawn_timer.timer.just_finished() {
         return;
     }
@@ -39,18 +36,40 @@ fn spawn_asteroid(
     let window = window_q.single();
     let half_width = window.width() / 2.0;
     let half_height = window.height() / 2.0;
+    let asteroid_radius = 25.0;
 
     // TODO: use this randomizer as the asteroid's target to set velocity direction
     let rand_x = rng.random_range(-half_width..half_width);
     let rand_y = rng.random_range(-half_height..half_height);
 
     // TODO: make a randomized starting position from outside the screen
+    let spawn_points = vec!["top", "bottom", "left", "right"];
+    let spawn_location = spawn_points.choose(&mut rng);
+    let (spawn_x, spawn_y) = match spawn_location {
+        Some(&"top") => (
+            rng.random_range(-half_width..half_width),
+            half_height + asteroid_radius,
+        ),
+        Some(&"bottom") => (
+            rng.random_range(-half_width..half_width),
+            -half_height - asteroid_radius,
+        ),
+        Some(&"left") => (
+            -half_width - asteroid_radius,
+            rng.random_range(-half_height..half_height),
+        ),
+        Some(&"right") => (
+            half_width - asteroid_radius,
+            rng.random_range(-half_height..half_height),
+        ),
+        _ => (0.0, 0.0),
+    };
 
     commands.spawn((
-        Mesh2d(meshes.add(Circle::new(25.0))),
+        Mesh2d(meshes.add(Circle::new(asteroid_radius))),
         MeshMaterial2d(materials.add(ColorMaterial::from_color(RED))),
         Transform {
-            translation: Vec3::new(rand_x, rand_y, 0.0),
+            translation: Vec3::new(spawn_x, spawn_y, 0.0),
             ..Default::default()
         },
     ));
